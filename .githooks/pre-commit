@@ -1,17 +1,29 @@
 #!/bin/sh
-# Reject em dashes in staged text files. See AGENTS.md.
-# The character is built from bytes so this script does not itself contain one.
+# Reject em dashes and credential-shaped strings in staged files.
+# See AGENTS.md. Character classes are written so this file does not match itself.
 em=$(printf '\342\200\224')
 bad=0
+
+check_text() {
+    # $1 file, $2 message
+    echo "pre-commit: $2 in $1"
+    bad=1
+}
+
 for f in $(git diff --cached --name-only --diff-filter=ACM); do
     case "$f" in
-        *.md|*.py|*.txt|*.csv|*.json|*.yml|*.yaml) ;;
+        *.md|*.py|*.txt|*.csv|*.json|*.yml|*.yaml|*.toml|*.cfg|*.ini|*.sh|*.env*|*Dockerfile*) ;;
         *) continue ;;
     esac
-    if git show ":$f" 2>/dev/null | grep -q "$em"; then
-        echo "pre-commit: em dash in $f"
-        echo "            use a comma, colon, full stop or parentheses instead"
-        bad=1
+    blob=$(git show ":$f" 2>/dev/null)
+
+    if printf '%s' "$blob" | grep -q "$em"; then
+        check_text "$f" "em dash (use a comma, colon or full stop)"
+    fi
+
+    if printf '%s' "$blob" | grep -aEq '(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[baprs]-[A-Za-z0-9-]{10,}'; then
+        check_text "$f" "credential-shaped string (never commit a token)"
     fi
 done
+
 exit $bad

@@ -43,3 +43,9 @@ in this project broke them.
 - `.githooks/pre-commit` rejects em dashes and `.githooks/commit-msg` rejects
   non-human authorship lines. Hooks are enabled with
   `git config core.hooksPath .githooks`.
+
+## Hooks installed here
+
+`.githooks/pre-commit` blocks em dashes and credential-shaped strings in staged
+text files. `.githooks/commit-msg` blocks non-human authorship lines. Enable with
+`git config core.hooksPath .githooks`.
