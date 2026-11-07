@@ -1,0 +1,23 @@
+#!/bin/sh
+# Reject non-human authorship lines and tool credit in commit messages.
+# See AGENTS.md. No vendor names are hard-coded here on purpose.
+msg="$1"
+bad=0
+
+if grep -q "$(printf '\360\237\244\226')" "$msg"; then
+    echo "commit-msg: remove the robot marker from the message"
+    bad=1
+fi
+
+if grep -qiE '^[[:space:]]*generated (with|by)[[:space:]]' "$msg"; then
+    echo "commit-msg: no tool credit lines"
+    bad=1
+fi
+
+# Any co-author trailer must be a human on this account, not an assistant.
+if grep -iE '^[[:space:]]*co-authored-by:' "$msg" | grep -qviE 'hansen'; then
+    echo "commit-msg: only human co-authors are allowed"
+    bad=1
+fi
+
+exit $bad

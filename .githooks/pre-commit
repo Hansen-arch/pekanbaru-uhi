@@ -1,0 +1,17 @@
+#!/bin/sh
+# Reject em dashes in staged text files. See AGENTS.md.
+# The character is built from bytes so this script does not itself contain one.
+em=$(printf '\342\200\224')
+bad=0
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+    case "$f" in
+        *.md|*.py|*.txt|*.csv|*.json|*.yml|*.yaml) ;;
+        *) continue ;;
+    esac
+    if git show ":$f" 2>/dev/null | grep -q "$em"; then
+        echo "pre-commit: em dash in $f"
+        echo "            use a comma, colon, full stop or parentheses instead"
+        bad=1
+    fi
+done
+exit $bad
